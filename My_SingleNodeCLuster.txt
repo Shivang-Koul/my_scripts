@@ -1,0 +1,104 @@
+#!/bin/bash
+# Single Node Hadoop Installation Script
+
+# Step 1: Update the package manager
+# This ensures we have the latest information about available packages and their versions.
+sudo apt-get update
+
+# Step 2: Generate SSH keys for password-less access (required for Hadoop services to communicate internally)
+ssh-keygen
+
+# Add the public key to the authorized_keys file to allow password-less SSH login
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+
+ssh localhost
+
+# Step 3: Install Java (Hadoop requires Java 1.6+ to run)
+sudo apt-get install openjdk-8-jdk -y
+
+# Step 4: Download and install Hadoop
+wget https://archive.apache.org/dist/hadoop/common/hadoop-1.2.1/hadoop-1.2.1.tar.gz
+
+# Extract the downloaded tar.gz file
+tar -xzvf hadoop-1.2.1.tar.gz
+
+# Move Hadoop to the /usr/local directory for global access
+sudo mv hadoop-1.2.1 /usr/local/hadoop
+
+# Step 5: Configure environment variables in ~/.bashrc (Scroll down at the bottom area & paste the commands)
+nano ~/.bashrc
+
+export HADOOP_PREFIX=/usr/local/hadoop/
+export PATH=$PATH:$HADOOP_PREFIX/bin 
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME
+
+
+
+# Step 6: Configure Hadoop-specific environment variables (paste this at below "export JAVA_HOME=/usr/lib/j2sdk1.5-sun")
+nano /usr/local/hadoop/conf/hadoop-env.sh
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_OPTS=-Djava.net.preferIPV4Stack=true 
+
+# Step 7: Configure core-site.xml (HDFS settings)(Paste the following commands in-between the <configuration> & </configuration>
+ (If you create your own DNS, you need to rename the localhost to your hostname e.g is))
+nano /usr/local/hadoop/conf/core-site.xml
+
+sudo bash -c 'cat << EOF > /usr/local/hadoop/conf/core-site.xml
+<configuration>
+ <property>
+ <name>fs.default.name</name>
+ <value>hdfs://localhost:9000</value>
+ </property>
+ <property>
+ <name>hadoop.tmp.dir</name>
+ <value>/usr/local/hadoop/tmp</value>
+ </property>
+</configuration>
+EOF'
+
+# Step 8: Configure hdfs-site.xml (HDFS replication factor)(Paste the following commands in-between the <configuration> & </configuration>)
+nano /usr/local/hadoop/conf/hdfs-site.xml
+
+sudo bash -c 'cat << EOF > /usr/local/hadoop/conf/hdfs-site.xml
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+</configuration>
+EOF'
+
+# Step 9: Configure mapred-site.xml (MapReduce job tracker settings)( Paste the following commands in-between the <configuration> & </configuration>)
+ (If you create your own DNS, you need to rename the localhost to your hostname e.g is) 
+nano /usr/local/hadoop/conf/mapred-site.xml
+
+sudo bash -c 'cat << EOF > /usr/local/hadoop/conf/mapred-site.xml 
+<configuration>
+<property>
+<name>mapred.job.tracker</name>
+<value>hdfs://localhost:9001</value>
+</property>
+</configuration>
+EOF'
+
+# Step 10: Create Hadoop temporary directory
+mkdir /usr/local/hadoop/tmp
+
+
+# Reload bashrc to apply changes
+source ~/.bashrc
+exec bash
+
+# Step 11: Format the Hadoop namenode (initializes HDFS)
+hadoop namenode -format
+
+# Step 12: Start Hadoop services (HDFS and MapReduce daemons)
+start-dfs.sh
+start-mapred.sh
+
+# Verify that all services are running by listing Java processes
+jps
+
