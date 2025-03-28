@@ -1,0 +1,181 @@
+------------------------1) Launch 6 Machine and Name it------------------------
+
+ssh (Private IP For All 5 Machines)
+
+arp (All 6 Machines are connected)
+
+To Configure Internal DNS
+
+sudo nano /etc/hosts    (Private IP)
+
+172.31.5.229 nn
+172.31.9.166 snn
+172.31.8.192 jt 
+172.31.12.113 dn1
+172.31.11.2 dn2
+172.31.9.132 dn3
+------------------------2) Passwordless login------------------------
+scp -i Keyname.pem Keyname.pem ubuntu@18.217.9.47:/home/ubuntu/.ssh
+
+cd .ssh
+
+chmod 400 rdMUM.pem
+
+ssh -i rdMUM.pem (nn,snn,jt,dn1,dn2,dn3)
+
+nano .profile
+
+eval `ssh-agent` ssh-add /home/ubuntu/.ssh/key.pem
+
+source .profile
+
+------------------------3) For Two&FRO Connection------------------------
+
+scp .profile snn:~/                                   {Sending .profile to All Machines} 
+
+scp .ssh/key.pem snn:/home/ubuntu/.ssh/               {Sending Key to All Machines} 
+
+ssh (nn,snn,jt,1dn,2dn,3dn)
+
+sudo nano /etc/hosts
+
+172.31.5.229 nn
+172.31.9.166 snn
+172.31.8.192 jt 
+172.31.12.113 dn1
+172.31.11.2 dn2
+172.31.9.132 dn3
+
+sudo hostname (nn,snn,jt,1dn,2dn,3dn)
+
+sudo nano /etc/ssh/ssh_config  (For Not Asking YES/NO)     
+                                                                     
+#StrictHostKeyChecking ask   -----CHANGE TO---------   StrictHostKeyChecking no                   
+
+------------------------4) For Handling All Machines At Once (DSH)------------------------
+
+sudo apt install dsh
+sudo nano /etc/dsh/dsh.conf
+(put remoteshell =ssh)
+sudo nano /etc/dsh/machines.list  (Put All Machines Name)
+nn
+snn
+jt
+1dn
+2dn
+3dn
+
+dsh -a sudo apt update
+
+------------------------5) To Install Java and download hadoop In all machines------------------------
+
+dsh -a sudo apt install openjdk-8-jre -y
+
+ dsh -a sudo apt install openjdk-8-jdk-headless
+
+dsh -a wget https://archive.apache.org/dist/hadoop/common/hadoop-1.2.1/hadoop-1.2.1.tar.gz
+
+dsh -a tar -zxf hadoop-1.2.1.tar.gz
+
+dsh -a sudo  mv hadoop-1.2.1 /usr/local/hadoop
+
+------------------------6) To Configure All Files------------------------
+
+nano ~/.bashrc                                                               (Only In Two Machine JT NN)
+                                                                             (Sending .bashrc to JT)
+export HADOOP_PREFIX=/usr/local/hadoop/
+export PATH=$PATH:$HADOOP_PREFIX/bin
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME
+
+scp .bashrc jt:~/ 
+
+*1*(cd /usr/local/hadoop/conf
+nano hadoop-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_OPTS=-Djava.net.preferIPV4Stack=true) ((u have to paste it at the last))
+
+
+*2*(nano core-site.xml                                               
+
+<property>
+<name>fs.default.name</name>
+<value>hdfs://nn:9000</value>                        
+</property>
+
+<property>
+<name>hadoop.tmp.dir</name>
+<value>/usr/local/hadoop/hdfs</value>
+</property>    )   
+
+(nano /usr/local/hadoop/conf/hdfs-site.xml
+
+<property>
+<name>dfs.replication</name>
+<value>3</value>
+</property>
+<property> 
+<name>dfs.permissions</name> 
+<value>false</value> 
+</property>      )                                                                                
+
+
+*3*(nano mapred-site.xml                           
+
+<property>
+<name>mapred.job.tracker</name>
+<value>hdfs://jt:9001</value>                              
+</property>  )
+
+
+nano slaves
+dn1
+dn2
+dn3
+
+
+nano masters
+snn
+
+------------------------7) Sending Configured File to All Machines------------------------
+
+/usr/local/hadoop/conf$ scp hadoop-env.sh core-site.xml mapred-site.xml slaves masters jt:/usr/local/hadoop/conf/               (snn,jt,dn1,dn2,dn3)
+
+
+------------------------##8) making tmp dir (make sure u are on nn)------------------------
+
+ssh nn 
+
+dsh -a mkdir /usr/local/hadoop/tmp
+
+------------------------9) exec bash (make sure you are on nn)------------------------
+
+dsh -a exec bash
+
+------------------------10) formatting hadoop namenode (make sure you are on nn)------------------------
+
+hadoop namenode -format
+
+------------------------11) starting logical (Make sure u are on jt)------------------------
+
+ssh jt
+start-mapred.sh 
+
+------------------------12) starting dfs (make sure u are nn)------------------------
+
+ssh nn 
+start-dfs.sh 
+ 
+------------------------13) check java process------------------------
+
+dsh -a jps
+
+
+172.31.33.145 nn
+172.31.36.2 snn
+172.31.39.92 jt
+172.31.40.60 1dn
+172.31.44.175 2dn
+172.31.47.26 3dn
+
+
