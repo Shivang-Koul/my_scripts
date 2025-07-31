@@ -1,0 +1,566 @@
+.....﻿Single Node Installation...........
+
+sudo apt-get update
+
+ssh-keygen 
+
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+----------**downloading and installing java (Hadoop requires a working Java 1.6+)**--------
+
+sudo apt-get install openjdk-8-jdk -y
+
+
+-----------------------------**downloading hadoop**------------------------
+
+wget https://archive.apache.org/dist/hadoop/common/hadoop-1.2.1/hadoop-1.2.1.tar.gz
+
+tar -xzvf hadoop-1.2.1.tar.gz
+
+sudo mv hadoop-1.2.1 /usr/local/hadoop
+
+---------------------------**configuring bashrc linux env setup**---------------
+
+#Configuring bashrc linux env setup
+
+nano ~/.bashrc
+
+export HADOOP_PREFIX=/usr/local/hadoop/
+export PATH=$PATH:$HADOOP_PREFIX/bin
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME
+
+#Setting hadoop env
+
+nano /usr/local/hadoop/conf/hadoop-env.sh
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_OPTS=-Djava.net.preferIPV4Stack=true
+
+#Configuring core-site.xml
+
+nano /usr/local/hadoop/conf/core-site.xml
+
+<property>
+<name>fs.default.name</name>
+<value>hdfs://localhost:9000</value>
+</property>
+
+<property>
+<name>hadoop.tmp.dir</name>
+<value>/usr/local/hadoop/tmp</value>
+</property>
+
+#Configuring hdfs-site.xml
+
+nano /usr/local/hadoop/conf/hdfs-site.xml
+
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+
+#Configuring mapred-site.xml
+
+
+nano /usr/local/hadoop/conf/mapred-site.xml
+
+<property>
+<name>mapred.job.tracker</name>
+<value>hdfs://localhost:9001</value>
+</property>
+
+----------**making tmp dir**---------
+
+mkdir /usr/local/hadoop/tmp
+
+-------------**exec bash**-------
+
+
+exec bash
+
+----------------**formatting hadoop namenode**--------------
+
+hadoop namenode -format
+
+---------------**starting hadoop services(daemons)**-------------------
+
+start-dfs.sh
+start-mapred.sh
+jps
+
+
+
+----------**Java Map Redue**---------
+
+cat>WordCount.java
+
+#paste the code
+
+//package org.myorg;
+import java.io.IOException;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.util.*;
+public class WordCount {
+public static class Map extends MapReduceBase implements
+Mapper<LongWritable, Text, Text, IntWritable> {
+private final static IntWritable one = new IntWritable(1);
+private Text word = new Text();public void map(LongWritable key, Text value,
+OutputCollector<Text,
+IntWritable> output, Reporter reporter) throws IOException {
+String line = value.toString();
+StringTokenizer tokenizer = new StringTokenizer(line);
+while (tokenizer.hasMoreTokens()) {
+word.set(tokenizer.nextToken());
+output.collect(word, one);
+}
+}
+}
+public static class Reduce extends MapReduceBase implements
+Reducer<Text, IntWritable, Text, IntWritable> {
+public void reduce(Text key, Iterator<IntWritable> values,
+OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException
+{
+int sum = 0;
+while (values.hasNext()) {
+sum += values.next().get();
+}
+output.collect(key, new IntWritable(sum));
+}
+}
+public static void main(String[] args) throws Exception {
+JobConf conf = new JobConf(WordCount.class);
+conf.setJobName("wordcount");
+conf.setOutputKeyClass(Text.class);
+conf.setOutputValueClass(IntWritable.class);conf.setMapperClass(Map.class);
+//conf.setCombinerClass(Reduce.class);
+conf.setReducerClass(Reduce.class);conf.setInputFormat(TextInputFormat.class);
+conf.setOutputFormat(TextOutputFormat.class);
+FileInputFormat.setInputPaths(conf, new Path(args[0]));
+FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+JobClient.runJob(conf);
+}
+}
+#press Enter
+ctrl C
+
+export CLASSPATH=/usr/local/hadoop/hadoop-core-1.2.1.jar
+
+mkdir wordcount_classes
+
+javac -d wordcount_classes/ WordCount.java
+
+cd wordcount_classes
+
+cd
+
+jar -cvf wordcount.jar -C wordcount_classes/ .
+
+#exit terminal if u want to push file frm local machine and then instead of ssh-i, put scp-i (for eg:-scp -i "cloudm.pem" en.7nov.txt ubuntu@ec2-18-212-29-171 .compute-
+1.amazonaws.com:~)
+
+#for those who are making file on terminal itself, lno needto logout, just make file using nano
+
+nano filename.extension
+#put data of your choice and then save and come out to terminal
+
+hadoop fs -put filename.extension .
+
+hadoop fs -du filename.extension
+
+hadoop jar wordcount.jar WordCount filename.extension result
+
+hadoop fs -lsr /user/ubuntu/result
+
+hadoop fs -get /user/ubuntu/result/part-00000 results
+
+sort -n -k2 results > result
+
+cat result
+
+
+
+
+.......Apache Hive Installation
+
+wget http://www-us.apache.org/dist/hive/hive-1.2.2/apache-hive-1.2.2-bin.tar.gz
+
+tar -zxf apache-hive-1.2.2-bin.tar.gz
+
+sudo mv apache-hive-1.2.2-bin /usr/local/hive
+
+nano .bashrc
+export HIVE_HOME=/usr/local/hive
+export PATH=$PATH:$HIVE_HOME/bin
+
+exec bash
+
+cd $HIVE_HOME/conf
+
+cp hive-env.sh.template hive-env.sh
+
+nano $HIVE_HOME/conf/hive-env.sh
+
+export HADOOP_HOME=/usr/local/hadoop
+
+hive
+
+hadoop fs -chmod -R 777 /tmp
+
+hive
+
+
+
+-------------**Loading Server Log Data in hive**--------------
+exit;/ control c
+wget https://s3.amazonaws.com/cloud-age/eventlog.log
+
+hadoop fs -rmr /user/ubuntu/*
+
+hadoop fs -copyFromLocal /home/ubuntu/eventlog.log /user/ubuntu/serverlog.log
+
+hadoop fs -ls /user/ubuntu/
+
+hive
+
+Create database server;
+
+Show databases;
+
+Use server;
+
+create table serverdata (time STRING, ip STRING, country STRING, status STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' LOCATION '/user/ubuntu/';
+
+select * from serverdata limit 10;
+
+SELECT * FROM serverdata where country = "IN" LIMIT 5;
+
+select * from serverdata where country = "GB" ;
+
+select * from serverdata where country = "IN" AND status = "ERROR";
+
+select * from serverdata where country = "FR" AND status = "SUCCESS";
+
+SELECT ip, time FROM Serverdata;
+
+SELECT DISTINCT ip, time from serverdata;
+
+
+SELECT DISTINCT ip from serverdata;
+SELECT DISTINCT * FROM serverdata;
+
+create table doc(text string) row format delimited fields terminated by '\n' stored as textfile;
+
+load data inpath '/user/ubuntu/serverlog.log' overwrite into table doc;
+
+SELECT word, COUNT(*) FROM doc LATERAL VIEW explode(split(text, ' ')) lTable as
+word GROUP BY word;
+
+ctrl+C
+
+-------------**Apache Pig Installation**------------------
+
+wget https://archive.apache.org/dist/pig/pig-0.16.0/pig-0.16.0.tar.gz
+
+tar -zxvf pig-0.16.0.tar.gz
+
+sudo mv pig-0.16.0 /usr/local/pig
+
+export PIG_HOME=/usr/local/pig/
+export PATH=$PATH:$PIG_HOME/bin
+
+pig
+
+lines = LOAD '/user/hive/warehouse/server.db/doc/serverlog.log' AS (line:chararray);
+/ user/hive/warehouse/server.db/doc/serverlog.log
+
+words = FOREACH lines GENERATE FLATTEN(TOKENIZE(line)) as word;
+
+grouped = GROUP words BY word;
+
+wordcount = FOREACH grouped GENERATE group, COUNT(words);
+
+DUMP wordcount
+
+
+.............Flume_log_data_ingestion :-
+
+
+
+
+Step 1 . sudo apt-get update && sudo apt-get upgrade -y
+ 
+Step 2. wget http://archive.apache.org/dist/flume/1.4.0/apache-flume-1.4.0-bin.tar.gz
+( Download flume )
+Step 3. tar -zxvf apache-flume-1.4.0-bin.tar.gz
+
+Step 4. cd apache-flume-1.4.0-bin/conf/
+( Configuration file of flume )
+
+Step 5. mv flume-env.sh.template flume-env.sh
+( To make temple file to flume-env.sh )
+
+Step 6. nano /home/ubuntu/apache-flume-1.4.0-bin/conf/flume-env.sh
+( To configuration of flume environment )
+
+Step 7. JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+FLUME_CLASSPATH="/home/ubuntu/apache-flume-1.4.0-bin/lib/*.jar"
+( To inform flume about java )
+
+Step 8. nano flume.conf  
+
+( To configure flume configuration file )
+Step 9. Paste the below classes in conf file
+# Flume agent config
+cloudage.sources = eventlog
+cloudage.channels = file_channel
+cloudage.sinks = sink_to_hdfs
+# Define / Configure source
+cloudage.sources.eventlog.type = exec
+cloudage.sources.eventlog.command = tail -F /var/log/flume/eventlog.log
+cloudage.sources.eventlog.restart = true
+cloudage.sources.eventlog.batchSize = 1000
+#cloudage.sources.eventlog.type = seq
+# HDFS sinks
+cloudage.sinks.sink_to_hdfs.type = hdfs
+cloudage.sinks.sink_to_hdfs.hdfs.fileType = DataStream
+cloudage.sinks.sink_to_hdfs.hdfs.path = hdfs://localhost:9000/user/ubuntu/flume/events
+cloudage.sinks.sink_to_hdfs.hdfs.filePrefix = eventlogcloudage.sinks.sink_to_hdfs.hdfs.fileSuffix = .log
+cloudage.sinks.sink_to_hdfs.hdfs.batchSize = 1000
+# Use a channel which buffers events in memory
+cloudage.channels.file_channel.type = file
+cloudage.channels.file_channel.checkpointDir = /var/log/flume/checkpoint
+cloudage.channels.file_channel.dataDirs = /var/log/flume/data
+# Bind the source and sink to the channel
+cloudage.sources.eventlog.channels = file_channel
+cloudage.sinks.sink_to_hdfs.channel = file_channel
+
+Step 10. sudo mkdir /var/log/flume/
+
+Step 11. sudo mkdir /var/log/flume/checkpoint/
+
+Step 12. sudo mkdir /var/log/flume/data/
+
+Step 13. sudo chmod 777 -R /var/log/flume
+
+Step 14. hadoop fs -mkdir hdfs://localhost:9000/user/ubuntu/flume/events
+
+Step 15. Goto on Browser userubuntu/flume/events
+
+Step 16. wget https://s3.amazonaws.com/cloud-age/generate_logs.py
+ls
+
+Step 18. nano generate_logs.py
+
+Step 19. Open new terminal & connect it with machine. (This will be our 2 nd Terminal )
+
+Step 20. tail -F /var/log/flume/eventlog.log ( 2 nd Terminal )
+
+Step 21. sudo python generate_logs.py ( 1 st Terminal ) (and if error install python first )
+
+( We will get information on 2 nd Terminal )
+
+Step 22. mv flume.conf apache-flume-1.4.0-bin/conf/
+( To move the flume file)
+
+Step 23. cd apache-flume-1.4.0-bin/bin
+( To go in bin folder)
+
+Step 24. ls <Enter>
+
+Step 25. ./flume-ng agent --conf /home/ubuntu/apache-flume-1.4.0-bin/conf/ --conf-file
+/home/ubuntu/apache-flume-1.4.0-bin/conf/flume.conf --name cloudage
+
+( To start the agent after 1st line check for space )
+
+Step 26. Go on 2 nd Terminal 
+
+sudo python generate_logs.py <Enter>
+
+( To run the python file. It is sink & put it on hdfs )
+
+Step 27. Go on terminal & refresh the link ( / user/ubuntu/flume/events )
+( We will able to all transaction details on GUI )
+
+Now press CTRL + C on 1 st Terminal. We will get the message shutdown background worker
+( We can able to see the flume
+
+
+---Continue after Flume only--
+Go to any terminal
+cd 
+wget https://s3.amazonaws.com/cloud-age/flume-sources-1.0-SNAPSHOT.jar 
+(In lib folder only)
+
+nano apache-flume-1.4.0-bin/conf/flume-env.sh
+(Add # before the last line)
+
+FLUME_CLASSPATH="/home/ubuntu/apache-flume-1.4.0-bin/lib/flume-sources-1.0-SNAPSHOT.jar" 
+
+hadoop fs -mkdir hdfs://localhost:9000/user/ubuntu/twitter/
+
+nano twitter.conf 
+
+# Naming the components on the current agent
+TwitterAgent.sources = Twitter 
+TwitterAgent.channels = MemChannel
+TwitterAgent.sinks = HDFS 
+# Describing/Configuring the source
+TwitterAgent.sources.Twitter.type = com.cloudera.flume.source.TwitterSource
+TwitterAgent.sources.Twitter.channels = MemChannel  
+TwitterAgent.sources.Twitter.consumerKey = bsITNAn6Gq0WrSopSWvp4VCfb 
+TwitterAgent.sources.Twitter.consumerSecret = Pd6gq5woj6rkFZ0ATt6G0b2rZvuhx52UnnoeNiQHOoHte7z8gw 
+TwitterAgent.sources.Twitter.accessToken = 2238647731-nARVjyclOs0YxcbFUNdjYFNt2ycwnKxLHgsO1Ut 
+TwitterAgent.sources.Twitter.accessTokenSecret = ayPrZalppaFEhG04dw6QojDSPgFmyPyfYnRogqtosoGri
+TwitterAgent.sources.Twitter.keywords = TSLPRB, hadoop, big data, analytics, bigdata, cloudera, data science, data scientist, business intelligence, Nandi Awards, new data 
+# Describing/Configuring the sink 
+TwitterAgent.sinks.HDFS.channel = MemChannel 
+TwitterAgent.sinks.HDFS.type = hdfs 
+TwitterAgent.sinks.HDFS.hdfs.path = hdfs://localhost:9000/user/ubuntu/twitter/
+TwitterAgent.sinks.HDFS.hdfs.fileType = DataStream 
+TwitterAgent.sinks.HDFS.hdfs.writeFormat = Text 
+TwitterAgent.sinks.HDFS.hdfs.batchSize = 1000
+TwitterAgent.sinks.HDFS.hdfs.rollSize = 0 
+TwitterAgent.sinks.HDFS.hdfs.rollCount = 1000
+TwitterAgent.sinks.HDFS.hdfs.rollInterval = 900
+# Describing/Configuring the channel 
+TwitterAgent.channels.MemChannel.type = memory 
+TwitterAgent.channels.MemChannel.capacity = 1000 
+TwitterAgent.channels.MemChannel.transactionCapacity = 1000
+
+---We can add hot topic keyword in TwitterAgent.sources.Twitter.keywords ---
+
+mv twitter.conf apache-flume-1.4.0-bin/conf/ 
+
+cd /home/ubuntu/apache-flume-1.4.0-bin/bin
+
+./flume-ng agent --conf /home/ubuntu/apache-flume-1.4.0-bin/conf/ -f  /home/ubuntu/apache-flume-1.4.0-bin/conf/twitter.conf -Dflume.root.logger=DEBUG,console -n TwitterAgent 
+
+(This will take time, screen might look frozen but still it goes on check for space after fist line)
+
+ctrl+c
+
+(To end the logging)
+
+
+..........mysql installation_Sqoop.txt
+
+
+sudo apt-get install mysql-server mysql-client -y
+
+Enter Password hadoop and Confirm Password hadoop
+
+service mysql status
+
+mysqladmin -u root -p version
+
+mysqladmin -u root -p status
+
+mysql -u root -p
+
+mysql> show databases;
+mysql> CREATE DATABASE jinga_db;
+mysql> GRANT ALL PRIVILEGES ON jinga_db.* TO 'root'@'localhost';
+mysql> show databases;
+mysql> USE jinga_db;
+mysql> show tables;
+mysql> CREATE TABLE user_data(first_name VARCHAR(50) NOT NULL,
+  company_name VARCHAR(100),
+  address VARCHAR(100),
+ country VARCHAR(50),
+ city VARCHAR(50),
+ state VARCHAR(50));
+
+mysql> desc user_data;
+ 
+exit;
+
+wget https://s3.amazonaws.com/cloud-age/userdata.txt
+
+sudo cp userdata.txt /var/lib/mysql/jinga_db/
+
+
+mysql -u root -p
+mysql> USE jinga_db;
+mysql> LOAD DATA INFILE 'userdata.txt' INTO TABLE user_data FIELDS TERMINATED BY ',' ;
+mysql> SHOW VARIABLES LIKE 'secure_file_priv';  
+exit;
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf   secure_file_priv = ""
+sudo service mysql restart
+mysql -u root -p
+USE jinga_db;
+set sql_mode='';
+mysql> LOAD DATA INFILE 'userdata.txt' INTO TABLE user_data FIELDS TERMINATED BY ',' ;
+mysql> SELECT COUNT(*) FROM user_data;
+mysql> select * from user_data limit 10;
+mysql> quit;
+
+
+wget https://s3.amazonaws.com/cloud-age/Sample-SQL-File-10000-Rows.sql
+mysql -u root -p jinga_db < Sample-SQL-File-10000-Rows.sql
+mysql -u root -p
+mysql> show databases;
+mysql> use jinga_db;
+mysql> show tables;
+mysql> desc user_details;
+mysql> select * from user_details limit 100;
+mysql> exit;
+
+Back up mysql database:
+
+mysqldump -u root -p --all-databases; > mysql_15-10-2016.sql
+
+restore exising database
+[root@CloudAge~]# mysql -u root -p < mysql_15-10-2016.sql 
+
+//for back up restore.
+
+
+APACHE SQOOP
+
+wget http://archive.apache.org/dist/sqoop/1.4.4/sqoop-1.4.4.bin__hadoop-1.0.0.tar.gz
+
+tar -zxvf sqoop-1.4.4.bin__hadoop-1.0.0.tar.gz
+
+sudo mv sqoop-1.4.4.bin__hadoop-1.0.0 /usr/local/sqoop/
+
+nano ~/.bashrc
+
+export SQOOP_PREFIX="/usr/local/sqoop/"
+export SQOOP_CONF_DIR="$SQOOP_PREFIX/conf"
+export SQOOP_CLASSPATH="$SQOOP_CONF_DIR"
+export PATH="$SQOOP_PREFIX/bin:$PATH"
+
+exec bash
+
+cd $SQOOP_PREFIX/conf
+mv sqoop-env-template.sh sqoop-env.sh
+nano sqoop-env.sh
+export HADOOP_COMMON_HOME=/usr/local/hadoop 
+export HADOOP_MAPRED_HOME=/usr/local/hadoop
+export ZOOKEPER_HOME=$ZOOKEEPER_HOME
+export HBASE_HOME=$HBASE_HOME
+export HIVE_HOME=$HIVE_HOME
+
+
+wget http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.18.tar.gz
+
+tar -zxf mysql-connector-java-5.1.18.tar.gz
+
+cp mysql-connector-java-5.1.18/mysql-connector-java-5.1.18-bin.jar /usr/local/sqoop/lib/
+
+cd $SQOOP_PREFIX/bin
+
+sqoop-version
+
+sqoop import --connect jdbc:mysql://localhost/jinga_db --table user_details -m 1 --target-dir /tables/userdata/
+ sqoop import --connect jdbc:mysql://localhost/jinga_db --username root -P --table user_details -m 1 --target-dir /tables/userdetails
+sqoop import --connect jdbc:mysql://localhost/jinga_db --table user_data -m 1  --target-dir /tables/userdata2/ --as-sequencefile                          
+	              
+
+       

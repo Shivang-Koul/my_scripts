@@ -1,0 +1,232 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww29200\viewh18380\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 ***************Confluent Platform version 7.8 (built around Apache Kafka) on an AWS EC2 instance running Red Hat Enterprise Linux (RHEL)**************\
+\
+\
+Shell Script: install_confluent_7.8_rhel8.sh\
+\
+sudo vi install_confluent_7.8_rhel8.sh\
+\
+Paste below all shell script in this file << start ========================================================================\
+\
+NOTE - Put your public & private ip \
+\
+#!/bin/bash\
+\
+# Script to install and configure Confluent Platform 7.8 on RHEL 8 EC2 instance\
+# EC2 Details: Public IP 3.109.201.239, Private IP 172.31.5.228\
+# Uses ZooKeeper (default for 7.8)\
+\
+# Exit on error\
+set -e\
+\
+# Variables\
+CONFLUENT_VERSION="7.8"\
+CONFLUENT_HOME="/opt/confluent"\
+PUBLIC_IP="3.109.201.239"\
+PRIVATE_IP="172.31.5.228"\
+\
+# Log function\
+log() \{\
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"\
+\}\
+\
+# Check if running as root or with sudo\
+if [[ $EUID -ne 0 ]]; then\
+    echo "This script must be run as root or with sudo."\
+    exit 1\
+fi\
+\
+# Step 1: Update system and install prerequisites\
+log "Updating system and installing prerequisites..."\
+yum update -y\
+yum install -y java-11-openjdk-devel wget curl which\
+log "Java version installed:"\
+java -version\
+\
+# Step 2: Install Confluent public key and YUM repository\
+log "Setting up Confluent YUM repository..."\
+rpm --import https://packages.confluent.io/rpm/$\{CONFLUENT_VERSION\}/archive.key\
+\
+# Create Confluent YUM repo file\
+cat << EOF > /etc/yum.repos.d/confluent.repo\
+[Confluent]\
+name=Confluent repository\
+baseurl=https://packages.confluent.io/rpm/$\{CONFLUENT_VERSION\}\
+gpgcheck=1\
+gpgkey=https://packages.confluent.io/rpm/$\{CONFLUENT_VERSION\}/archive.key\
+enabled=1\
+EOF\
+\
+# Step 3: Install Confluent Platform\
+log "Installing Confluent Platform 7.8..."\
+yum clean all\
+yum install -y confluent-platform\
+log "Confluent Platform installed."\
+\
+# Step 4: Set CONFLUENT_HOME environment variable\
+log "Configuring environment variables..."\
+echo "export CONFLUENT_HOME=$\{CONFLUENT_HOME\}" >> /etc/profile.d/confluent.sh\
+echo "export PATH=\\$PATH:\\$\{CONFLUENT_HOME\}/bin" >> /etc/profile.d/confluent.sh\
+source /etc/profile.d/confluent.sh\
+\
+# Step 5: Configure ZooKeeper\
+log "Configuring ZooKeeper..."\
+ZOOKEEPER_PROPERTIES="/etc/kafka/zookeeper.properties"\
+mkdir -p /var/lib/zookeeper\
+cat << EOF > $\{ZOOKEEPER_PROPERTIES\}\
+dataDir=/var/lib/zookeeper\
+clientPort=2181\
+maxClientCnxns=0\
+admin.enableServer=false\
+EOF\
+\
+# Step 6: Configure Kafka\
+log "Configuring Kafka..."\
+KAFKA_PROPERTIES="/etc/kafka/server.properties"\
+mkdir -p /var/lib/kafka/data\
+cat << EOF > $\{KAFKA_PROPERTIES\}\
+broker.id=0\
+listeners=PLAINTEXT://$\{PRIVATE_IP\}:9092\
+advertised.listeners=PLAINTEXT://$\{PUBLIC_IP\}:9092\
+num.partitions=3\
+default.replication.factor=1\
+log.dirs=/var/lib/kafka/data\
+zookeeper.connect=$\{PRIVATE_IP\}:2181\
+EOF\
+\
+# Step 7: Configure Confluent Control Center\
+log "Configuring Confluent Control Center..."\
+CONTROL_CENTER_PROPERTIES="/etc/confluent-control-center/control-center-production.properties"\
+cat << EOF > $\{CONTROL_CENTER_PROPERTIES\}\
+confluent.controlcenter.rest.listeners=http://$\{PUBLIC_IP\}:9021\
+confluent.controlcenter.kafka.bootstrap.servers=$\{PRIVATE_IP\}:9092\
+confluent.controlcenter.id=1\
+confluent.controlcenter.data.dir=/var/lib/confluent-control-center\
+EOF\
+\
+# Step 8: Set up systemd services\
+log "Setting up systemd services..."\
+# ZooKeeper service\
+cat << EOF > /etc/systemd/system/zookeeper.service\
+[Unit]\
+Description=Apache ZooKeeper Server\
+Requires=network.target\
+After=network.target\
+\
+[Service]\
+Type=simple\
+User=root\
+ExecStart=$\{CONFLUENT_HOME\}/bin/zookeeper-server-start $\{ZOOKEEPER_PROPERTIES\}\
+ExecStop=$\{CONFLUENT_HOME\}/bin/zookeeper-server-stop\
+Restart=on-failure\
+\
+ \uc0\u1502 \u1510  [Install]\
+WantedBy=multi-user.target\
+EOF\
+\
+# Kafka service\
+cat << EOF > /etc/systemd/system/kafka.service\
+[Unit]\
+Description=Apache Kafka Server\
+Requires=network.target zookeeper.service\
+After=network.target zookeeper.service\
+\
+[Service]\
+Type=simple\
+User=root\
+ExecStart=$\{CONFLUENT_HOME\}/bin/kafka-server-start $\{KAFKA_PROPERTIES\}\
+ExecStop=$\{CONFLUENT_HOME\}/bin/kafka-server-stop\
+Restart=on-failure\
+\
+[Install]\
+WantedBy=multi-user.target\
+EOF\
+\
+# Control Center service\
+cat << EOF > /etc/systemd/system/control-center.service\
+[Unit]\
+Description=Confluent Control Center\
+Requires=network.target kafka.service\
+After=network.target kafka.service\
+\
+[Service]\
+Type=simple\
+User=root\
+ExecStart=$\{CONFLUENT_HOME\}/bin/control-center-start $\{CONTROL_CENTER_PROPERTIES\}\
+ExecStop=$\{CONFLUENT_HOME\}/bin/control-center-stop\
+Restart=on-failure\
+\
+[Install]\
+WantedBy=multi-user.target\
+EOF\
+\
+# Reload systemd\
+systemctl daemon-reload\
+\
+# Enable and start services\
+log "Starting ZooKeeper, Kafka, and Control Center services..."\
+systemctl enable zookeeper\
+systemctl enable kafka\
+systemctl enable control-center\
+systemctl start zookeeper\
+systemctl start kafka\
+systemctl start control-center\
+\
+# Step 9: Verify services\
+log "Verifying services..."\
+sleep 10  # Wait for services to start\
+systemctl status zookeeper --no-pager\
+systemctl status kafka --no-pager\
+systemctl status control-center --no-pager\
+\
+# Step 10: Output access information\
+log "Installation and configuration complete!"\
+log "Access Confluent Control Center at: http://$\{PUBLIC_IP\}:9021"\
+log "Kafka broker running at: $\{PUBLIC_IP\}:9092"\
+log "ZooKeeper running at: $\{PRIVATE_IP\}:2181"\
+log "Ensure AWS Security Group allows inbound traffic on ports 2181, 9092, and 9021."\
+\
+>> end ========================================================================\
+\
+\
+sudo chmod +x install_confluent_7.8_rhel8.sh\
+\
+sudo ./install_confluent_7.8_rhel8.sh\
+\
+Verify Installation:\
+The script outputs the Confluent Control Center URL: http://3.109.201.239:9021.\
+Open this URL in a browser to access the Control Center.\
+Ensure the EC2 security group allows inbound traffic on:\
+2181 (ZooKeeper)\
+9092 (Kafka)\
+9021 (Control Center)\
+\
+Service Fails to Start:\
+Check: \
+\
+systemctl status zookeeper\
+\
+systemctl status kafka\
+\
+systemctl status control-center\
+\
+\
+Logs:\
+\
+ journalctl -u kafka or /var/log/confluent/control-center/control-center.log\
+Control Center Inaccessible:\
+Verify port 9021 is open in the security group.\
+Test: curl http://3.109.201.239:9021.\
+Kafka or ZooKeeper Issues:\
+Ensure ports 9092 and 2181 are open.\
+\
+\
+Check permissions: \
+\
+chown -R root:root /var/lib/kafka /var/lib/zookeeper}

@@ -1,0 +1,610 @@
+*******************Step-by-Step Setup for Confluent Kafka RHEL 8*****************************************
+
+Launch redhat 8 ec2 instance
+image: ami-0619404f9180a28b3  
+Machine - C4 , C5 and M5 category
+EBS Root volume size = 30Gb
+
+==================Essential kernel tuning parameters=============================
+
+$ vi kafka_kernel_tuning.sh
+
+#!/bin/bash
+
+# Check if running as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root. Use sudo." >&2
+    exit 1
+fi
+
+# ===== KERNEL PARAMETERS =====
+echo "Applying kernel tuning for Kafka..."
+
+# Network & Socket Buffers
+cat >> /etc/sysctl.conf <<EOF
+# Kafka Network Tuning
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.tcp_rmem=4096 87380 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+net.ipv4.tcp_no_metrics_save=1
+net.ipv4.tcp_sack=0
+net.ipv4.tcp_timestamps=0
+
+# File Descriptors & Processes
+fs.file-max=1000000
+fs.nr_open=1000000
+kernel.pid_max=262144
+
+# Virtual Memory
+vm.swappiness=1
+vm.dirty_background_ratio=5
+vm.dirty_ratio=60
+vm.dirty_expire_centisecs=2000
+EOF
+
+# Apply sysctl changes
+sysctl -p
+
+# ===== DISABLE TRANSPARENT HUGEPAGES =====
+echo "Disabling Transparent HugePages (THP)..."
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+# Make THP settings persistent
+if ! grep -q "transparent_hugepage" /etc/rc.local; then
+    echo "echo never > /sys/kernel/mm/transparent_hugepage/enabled" >> /etc/rc.local
+    echo "echo never > /sys/kernel/mm/transparent_hugepage/defrag" >> /etc/rc.local
+    chmod +x /etc/rc.local
+fi
+
+# ===== DISK I/O SCHEDULER =====
+# Set deadline/noop scheduler for all disks (prioritize Kafka I/O)
+for disk in $(lsblk -d -o NAME | grep -v NAME); do
+    if [ -e /sys/block/$disk/queue/scheduler ]; then
+        echo "Setting deadline scheduler for $disk..."
+        echo deadline > /sys/block/$disk/queue/scheduler
+        echo 1024 > /sys/block/$disk/queue/nr_requests
+    fi
+done
+
+# ===== ULIMITS FOR KAFKA USER =====
+KAFKA_USER="kafka"  # Change to your Kafka user if different
+
+if id "$KAFKA_USER" &>/dev/null; then
+    echo "Increasing ulimits for user $KAFKA_USER..."
+    cat >> /etc/security/limits.conf <<EOF
+$KAFKA_USER soft nofile 1000000
+$KAFKA_USER hard nofile 1000000
+$KAFKA_USER soft nproc 65536
+$KAFKA_USER hard nproc 65536
+EOF
+else
+    echo "Warning: User '$KAFKA_USER' not found. Skipping ulimit changes."
+fi
+
+# ===== VERIFY CHANGES =====
+echo ""
+echo "=== Verification ==="
+echo "Network buffers:"
+sysctl net.core.rmem_max net.core.wmem_max
+
+echo ""
+echo "THP status:"
+cat /sys/kernel/mm/transparent_hugepage/enabled
+
+echo ""
+echo "Disk schedulers:"
+for disk in $(lsblk -d -o NAME | grep -v NAME); do
+    if [ -e /sys/block/$disk/queue/scheduler ]; then
+        echo "$disk: $(cat /sys/block/$disk/queue/scheduler)"
+    fi
+done
+
+echo ""
+echo "Script completed. Reboot to ensure all changes take effect."
+
+
+
+$ chmod +x kafka_kernel_tuning.sh
+
+$ sudo ./kafka_kernel_tuning.sh
+
+
+====================Step 1: Prepare the System================================
+ 
+SSH into the Machine:
+
+$ ssh -i your-key.pem ec2-user@public-ip
+
+Replace your-key.pem with your SSH key file
+
+Update RHEL 8
+
+$ sudo dnf update -y
+
+Install Required Tools:
+
+$ sudo yum install -y wget tar nano 
+
+$ sudo yum install firewalld -y
+
+Install Java: Confluent 5.5 requires Java 8 or 11 (Java 11 recommended)
+
+$ sudo yum install -y java-11-openjdk java-11-openjdk-devel
+
+Verify Java:
+
+$ java -version
+
+
+================Step 2: Download and Extract Confluent 5.5.0===============================
+
+Download the Tar File:
+
+$ sudo wget -c https://packages.confluent.io/archive/5.5/confluent-5.5.0-2.12.tar.gz
+
+or
+
+https://packages.confluent.io/archive/7.4/confluent-7.4.1.tar.gz              # Refer from https://packages.confluent.io/archive/
+
+If the download fails, verify the URL or check https://packages.confluent.io/archive/
+
+Extract the Tarball
+
+$ sudo tar -xzvf confluent-5.5.0-2.12.tar.gz
+
+Move to a System Directory:
+
+$ sudo mv confluent-5.5.0 /opt/confluent
+$ sudo chown -R ec2-user:ec2-user /opt/confluent
+
+
+===================Step 3: Set Environment Variables===============================
+
+Add Confluent to PATH:
+
+$ echo 'export PATH=$PATH:/opt/confluent/bin' >> ~/.bashrc
+$ echo 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk' >> ~/.bashrc
+$ source ~/.bashrc
+
+
+$ echo $PATH
+$ echo $JAVA_HOME
+
+
+======================Step 4: Configure ZooKeeper=====================================
+
+Create Data Directory:
+
+$ sudo mkdir -p /var/lib/zookeeper
+$ sudo chown ec2-user:ec2-user /var/lib/zookeeper
+
+
+Edit ZooKeeper Configuration:
+
+$ sudo vi  /opt/confluent/etc/kafka/zookeeper.properties
+
+
+dataDir=/var/lib/zookeeper
+clientPort=2181
+maxClientCnxns=0
+tickTime=2000
+initLimit=5
+syncLimit=2
+
+NOTE - Paste this conf at last line
+
+====================Step 5: Configure Kafka==========================================
+
+Create Data Directory
+
+$ sudo mkdir -p /var/lib/kafka
+$ sudo chown ec2-user:ec2-user /var/lib/kafka
+
+
+Edit Kafka Configuration
+
+$ sudo vi /opt/confluent/etc/kafka/server.properties
+
+broker.id=0
+listeners=PLAINTEXT://0.0.0.0:9092
+advertised.listeners=PLAINTEXT://13.203.73.36:9092               # Uses public IP 
+zookeeper.connect=172.31.25.141:2181                                 # Uses private IP
+log.dirs=/var/lib/kafka
+num.partitions=1
+default.replication.factor=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+
+
+NOTE - Paste at last line but do changes 
+
+listeners: Binds to all interfaces for accessibility.
+advertised.listeners: Uses public IP (3.7.46.115) for external client connections.
+zookeeper.connect: Uses private IP (172.31.15.44) for internal ZooKeeper communication.
+Replication factors set to 1 for single-node compatibility.
+
+
+==========================Step 6: Configure Confluent Control Center===============================
+
+Create Data Directory:
+
+$ sudo mkdir -p /var/lib/confluent-control-center
+$ sudo chown ec2-user:ec2-user /var/lib/confluent-control-center
+
+Edit Control Center Configuration:
+
+$ sudo vi  /opt/confluent/etc/confluent-control-center/control-center.properties
+
+confluent.controlcenter.data.dir=/var/lib/confluent-control-center
+confluent.controlcenter.rest.listeners=http://0.0.0.0:9021
+bootstrap.servers=13.203.73.36:9092                                                         # public ip as per your ec2 machine
+zookeeper.connect=172.31.25.141:2181                                                   # private ip as per your ec2 machine
+confluent.controlcenter.streams.num.stream.threads=2
+confluent.controlcenter.internal.topics.replication=1
+confluent.controlcenter.command.topic.replication=1
+confluent.monitoring.interceptor.topic.replication=1
+confluent.metrics.topic.replication=1
+
+
+Notes:
+listeners: Binds Control Center to port 9021.
+bootstrap.servers: Points to Kafka’s public IP.
+zookeeper.connect: Uses private IP for ZooKeeper.
+Replication factors set to 1 for single-node setup.
+Reduced num.stream.threads to minimize resource usage.
+
+
+========================Step 7: Configure Firewall (if enabled)=============================
+
+Check Firewall Status
+
+$ sudo systemctl status firewalld
+
+#sudo systemctl start firewalld
+#sudo systemctl enable firewalld
+
+
+Open Required Ports
+
+$ sudo firewall-cmd --permanent --add-port=2181/tcp
+$ sudo firewall-cmd --permanent --add-port=9092/tcp
+$ sudo firewall-cmd --permanent --add-port=9021/tcp
+$ sudo firewall-cmd --reload
+$ sudo firewall-cmd --list-ports
+
+
+========================Step 8: Start Services=================================
+Start ZooKeeper:
+
+$ /opt/confluent/bin/zookeeper-server-start /opt/confluent/etc/kafka/zookeeper.properties &
+
+
+Verify ZooKeeper
+
+$ ss -tuln | grep 2181
+
+Start Kafka:
+
+$ /opt/confluent/bin/kafka-server-start /opt/confluent/etc/kafka/server.properties &
+
+Verify Kafka:
+
+$ ss -tuln | grep 9092
+
+
+Start Confluent Control Center
+
+$ /opt/confluent/bin/control-center-start /opt/confluent/etc/confluent-control-center/control-center.properties &
+
+
+Verify Control Center:
+
+$ ss -tuln | grep 9021
+
+
+=======================Step 9: Test the Setup==============================================
+
+
+$ /opt/confluent/bin/kafka-topics --create --topic test-topic --partitions 1 --replication-factor 1 --bootstrap-server 13.203.73.36:9092      
+
+NOTE - Change IP with public ip as per your ec2 machine
+
+
+Expected output:  Created topic test-topic
+
+
+List Topics:
+
+$ /opt/confluent/bin/kafka-topics --list --bootstrap-server 13.203.73.36:9092
+
+NOTE - Change IP with public ip as per your ec2 machine
+
+Expected output: test-topic
+
+
+Produce Messages:
+
+$ /opt/confluent/bin/kafka-console-producer --topic test-topic --bootstrap-server 3.7.46.115:9092
+
+NOTE - Change IP with public ip as per your ec2 machine
+
+
+Type your message Example -  Hello, Kafka! Test message ... Cloudage
+
+Press Ctrl+C to exit
+
+
+Consume Messages:
+
+$ /opt/confluent/bin/kafka-console-consumer --topic test-topic --from-beginning --bootstrap-server 3.7.46.115:9092
+
+NOTE - Change IP with public ip as per your ec2 machine
+
+
+Expected output result  -  Hello, Kafka! Test message ... Cloudage
+
+Press Ctrl+C to exit
+
+
+Verify Control Center:
+
+Open a browser and navigate to : - http://3.7.46.115:9021
+
+NOTE - Change IP with public ip as per your ec2 machine & check port in Security group
+
+You should see the Control Center UI.
+Navigate to Topics > test-topic to confirm it exists and contains messages.
+Check Brokers to ensure broker ID 0 is running
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
