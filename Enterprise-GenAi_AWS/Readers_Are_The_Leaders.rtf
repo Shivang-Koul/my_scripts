@@ -1,0 +1,52 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Regular;\f1\froman\fcharset0 TimesNewRomanPSMT;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 In This Solution By CloudAge Global, A Large Language Model (LLM) Is Hosted On Amazon SageMaker. The Intuitive Features And Robust Infrastructure Of SageMaker Are Used To Deploy Sophisticated AI Models Reliably And Securely.\
+\
+Users Of All Skill Levels Can Efficiently Manage And Operate Their LLMs, Making The Whole Process Straightforward And User-Friendly. Amazon SageMaker Studio, A Unified Machine Learning Integrated Development Environment (IDE), Streamlines The Model\'92s Development, Training, Testing, And Deployment From One Central Location.\
+\
+A SageMaker Studio Notebook Is Used To Deploy The Model As A Hosted Inference On The SageMaker Endpoint. AWS Lambda Functions Are Used To Interact With The SageMaker Hosted Inference, While Amazon API Gateway Bridges Requests From The Frontend To Lambda Securely And At Scale.\
+\
+Below Are The Detailed Steps For CloudAge Global\'92s Deployment:\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f1 \cf2 	1.	After Logging Into The AWS Console, Go To Amazon SageMaker AI.\
+1a. In SageMaker AI, Go To Studio And Create A User With Default Settings.\
+1b. Launch Studio To Create A JupyterLab Space With Default Settings. Example: (Instance: ml.t3.medium, Storage: 5GB).\
+1c. Open Jupyter Notebook And Import \'93jupyter_notebook.ipynb\'94 File From Desktop.\
+1d. Run The Code Starting From Step 2 Until Step 3 At Least, Then Continue Running All Code Sections.\
+\
+2a. Now, Go To AWS Lambda And Create A Function. While Configuring, Choose Python 3.11.\
+2b. Ensure The IAM Role Has The AmazonSageMakerFullAccess Policy Attached To API Gateway Or As Required By Your Organisation\'92s Policies.\
+2c. Copy The Code From Desktop \'93lambda_function.py\'94 File And Paste It In The Lambda Code Editor.\
+2d. Go To Configurations \uc0\u8594  Environment Variables \u8594  Add Environment Variable.\
+2e. Key \uc0\u8594  ENDPOINT_NAME, Value \u8594  \'93hf-llm-falcon-7b-instruct-bf16-2025-07-10-07-10-16-076\'94. Best Practice Is To Copy The Name Directly From The Endpoint In SageMaker Studio.\
+2f. Deploy The Lambda Function.\
+	3.	Next, Go To AWS Console, Search API Gateway, And Choose REST API.\
+3a. Click On Import And Upload \'93generative-ai-api-prod-swagger-apigateway.json\'94.\
+3b. Review Resources And Stages.\
+3c. From The Dropdown In The POST Resource, Click On \'93Integration Request\'94 And Replace The Lambda Function With Your Deployed Lambda.\
+3d. Confirm Any Code Changes Made Locally Have Been Applied.\
+3e. Deploy The API And Create A New Stage Named According To Your Organisation\'92s Naming Conventions.\
+The GenAI Backend Is Now Ready. Let\'92s Prepare The Frontend.\
+	4.	On Your Desktop:\
+4a. Edit \'93index.html\'94 And Change \uc0\u8594  var apiGatewayUrl = \'93\{API_GATEWAY_POST_URL\}\'94.\
+4b. Upload \'93logo.jpeg\'94 And \'93index.html\'94 To The S3 Bucket You Will Use In CloudFront.\
+	5.	Go To AWS CloudFront And Create A Distribution, Specify Origin As S3, And Choose The Bucket Containing \'93index.html\'94.\
+5a. Go To CloudFront Distribution \uc0\u8594  General \u8594  Edit \u8594  Set Default Root Object To \'93index.html\'94.\
+5b. Go To Your CloudFront Distribution \uc0\u8594  Origins \u8594  Check \'93cloudage-gen-ai\'85\'94 \u8594  Edit \u8594  Copy The S3 Bucket Policy.\
+5c. Go To The S3 Bucket Containing \'93index.html\'94 And Edit The Bucket Policy.\
+5d. Or Paste The S3 Policy From Desktop, Remembering To Update The ARN.\
+5e. Wait Until The CloudFront Distribution Deploys To All Edge Locations (This May Take Around 10 Minutes Depending On The Size Of The Web Application).\
+5f. Go To CloudFront Distribution \uc0\u8594  Invalidations \u8594  Create Invalidation And Paste \'93/*\'94.\
+5g. Once Deployed, Go To The URL (Distribution Domain Name).\
+\
+The Sample Application, Hosted In Amazon S3 And Delivered Via CloudFront, Invokes The API Gateway Which Calls The Lambda Function, Completing The Secure And Scalable Workflow.\
+\
+To Update Or Replace The LLM, Simply Deploy A New Model On The SageMaker Endpoint, Update The Lambda Code To Point To The New Endpoint, And Validate Using The Sample Application.\
+\
+Great Work, Project Completed. All Praise Be To Almighty GOD Alone.}
