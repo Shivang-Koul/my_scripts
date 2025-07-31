@@ -1,0 +1,1429 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Arial-BoldMT;\f1\froman\fcharset0 Times-Bold;\f2\fswiss\fcharset0 Helvetica-Bold;
+\f3\fswiss\fcharset0 Arial-BoldItalicMT;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red16\green60\blue192;\red13\green16\blue19;
+\red52\green55\blue54;\red228\green234\blue244;\red11\green12\blue12;\red226\green226\blue226;\red24\green24\blue24;
+}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c6667\c33333\c80000;\cssrgb\c5882\c7843\c9804;
+\cssrgb\c26667\c27843\c27451;\cssrgb\c91373\c93333\c96471;\cssrgb\c4706\c5098\c5490;\cssrgb\c90980\c90980\c90980;\cssrgb\c12157\c12157\c12157;
+}
+\margl1440\margr1440\vieww38200\viewh21120\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs45\fsmilli22667 \cf0 \expnd0\expndtw0\kerning0
+.....\uc0\u65279 Single Node Installation...........
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo apt-get update
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ssh-keygen &&
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cat ~/.ssh/id*.pub >> ~/.ssh/authorized_keys
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ----------**downloading and installing java (Hadoop requires a working Java 1.6+)**--------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo apt-get install openjdk-8-jdk -y
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 -----------------------------**downloading hadoop**------------------------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 wget https://archive.apache.org/dist/hadoop/common/hadoop-1.2.1/hadoop-1.2.1.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 tar -xzvf hadoop-1.2.1.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo mv hadoop-1.2.1 /usr/local/hadoop
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ---------------------------**configuring bashrc linux env setup**---------------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #Configuring bashrc linux env setup
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano ~/.bashrc
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 export HADOOP_PREFIX=/usr/local/hadoop/
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export PATH=$PATH:$HADOOP_PREFIX/bin
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export PATH=$PATH:$JAVA_HOME
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #Setting hadoop env
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano /usr/local/hadoop/conf/hadoop-env.sh
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export HADOOP_OPTS=-Djava.net.preferIPV4Stack=true
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #Configuring core-site.xml
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano /usr/local/hadoop/conf/core-site.xml
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 <property>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <name>fs.default.name</name>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <value>hdfs://localhost:9000</value>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 </property>
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 <property>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <name>hadoop.tmp.dir</name>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <value>/usr/local/hadoop/tmp</value>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 </property>
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #Configuring hdfs-site.xml
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano /usr/local/hadoop/conf/hdfs-site.xml
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 <property>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <name>dfs.replication</name>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <value>1</value>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 </property>
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #Configuring mapred-site.xml
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 nano /usr/local/hadoop/conf/mapred-site.xml
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 <property>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <name>mapred.job.tracker</name>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 <value>hdfs://localhost:9001</value>
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 </property>
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ----------**making tmp dir**---------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mkdir /usr/local/hadoop/tmp
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 -------------**exec bash**-------
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 exec bash
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ----------------**formatting hadoop namenode**--------------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop namenode -format
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ---------------**starting hadoop services(daemons)**-------------------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 start-dfs.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 start-mapred.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 jps
+\f1\fs40 \
+\
+\
+\
+
+\f0\fs45\fsmilli22667 ----------**Java Map Redue**---------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cat>WordCount.java
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #paste the code
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 //package org.myorg;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import java.io.IOException;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import java.util.*;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import org.apache.hadoop.fs.Path;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import org.apache.hadoop.conf.*;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import org.apache.hadoop.io.*;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import org.apache.hadoop.mapred.*;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 import org.apache.hadoop.util.*;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 public class WordCount \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 public static class Map extends MapReduceBase implements
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Mapper<LongWritable, Text, Text, IntWritable> \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 private final static IntWritable one = new IntWritable(1);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 private Text word = new Text();public void map(LongWritable key, Text value,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 OutputCollector<Text,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 IntWritable> output, Reporter reporter) throws IOException \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 String line = value.toString();
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 StringTokenizer tokenizer = new StringTokenizer(line);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 while (tokenizer.hasMoreTokens()) \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 word.set(tokenizer.nextToken());
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 output.collect(word, one);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 public static class Reduce extends MapReduceBase implements
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Reducer<Text, IntWritable, Text, IntWritable> \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 public void reduce(Text key, Iterator<IntWritable> values,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 int sum = 0;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 while (values.hasNext()) \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 sum += values.next().get();
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 output.collect(key, new IntWritable(sum));
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 public static void main(String[] args) throws Exception \{
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 JobConf conf = new JobConf(WordCount.class);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 conf.setJobName("wordcount");
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 conf.setOutputKeyClass(Text.class);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 conf.setOutputValueClass(IntWritable.class);conf.setMapperClass(Map.class);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 //conf.setCombinerClass(Reduce.class);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 conf.setReducerClass(Reduce.class);conf.setInputFormat(TextInputFormat.class);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 conf.setOutputFormat(TextOutputFormat.class);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 FileInputFormat.setInputPaths(conf, new Path(args[0]));
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 JobClient.runJob(conf);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \}
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 #press Enter
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ctrl C
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 export CLASSPATH=/usr/local/hadoop/hadoop-core-1.2.1.jar
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mkdir wordcount_classes
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 javac -d wordcount_classes/ WordCount.java
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cd wordcount_classes
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cd
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 jar -cvf wordcount.jar -C wordcount_classes/ .
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #exit terminal if u want to push file frm local machine and then instead of ssh-i, put scp-i (for eg:-scp -i "cloudm.pem" en.7nov.txt ubuntu@ec2-18-212-29-171 .compute-
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 1.amazonaws.com:~)
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 #for those who are making file on terminal itself, lno needto logout, just make file using nano
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano filename.extension
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 #put data of your choice and then save and come out to terminal
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -put filename.extension .
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -du filename.extension
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop jar wordcount.jar WordCount filename.extension result
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -lsr /user/ubuntu/result
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -get /user/ubuntu/result/part-00000 results
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sort -n -k2 results > result
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Wc\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cat result
+\f1\fs40 \
+\
+\
+\
+\
+
+\f0\fs45\fsmilli22667 .......Apache Hive Installation
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 wget https://archive.apache.org/dist/hive/hive-1.2.2/apache-hive-1.2.2-bin.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 tar -zxf apache-hive-1.2.2-bin.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo mv apache-hive-1.2.2-bin /usr/local/hive
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano .bashrc
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export HIVE_HOME=/usr/local/hive
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export PATH=$PATH:$HIVE_HOME/bin
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 exec bash
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cd $HIVE_HOME/conf
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cp hive-env.sh.template hive-env.sh
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano $HIVE_HOME/conf/hive-env.sh
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 export HADOOP_HOME=/usr/local/hadoop
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hive
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -chmod -R 777 /tmp
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hive
+\f1\fs40 \
+\
+\
+\
+
+\f0\fs45\fsmilli22667 -------------**Loading Server Log Data in hive**--------------
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 exit;/ control c
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 wget https://s3.amazonaws.com/cloud-age/eventlog.log
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -rmr /user/ubuntu/*
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -copyFromLocal /home/ubuntu/eventlog.log /user/ubuntu/serverlog.log
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -ls /user/ubuntu/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hive
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Create database server;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Show databases;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Use server;\uc0\u8232 \u8232 CREATE TABLE serverdata (
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0\'a0\'a0\'a0time STRING,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0\'a0\'a0\'a0ip STRING,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0\'a0\'a0\'a0country STRING,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0\'a0\'a0\'a0status STRING)
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ROW FORMAT DELIMITED
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 FIELDS TERMINATED BY '|'
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 STORED AS TEXTFILE
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 LOCATION '/user/ubuntu/event.log';
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 CREATE TABLE IF NOT EXISTS logs (\
+    log_date STRING,\
+    ip_address STRING,\
+    country STRING,\
+    status STRING\
+)\
+ROW FORMAT DELIMITED\
+FIELDS TERMINATED BY '|' \
+STORED AS TEXTFILE;\
+
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 LOAD DATA LOCAL INPATH '/path/to/logfile.log' INTO TABLE logs;\
+\
+SELECT * FROM logs;\
+SELECT status, COUNT(*) AS log_count\
+FROM logs\
+GROUP BY status;\
+\
+SELECT * FROM logs;\
+SELECT DISTINCT ip_address FROM logs;\
+\
+SELECT country, COUNT(*) AS log_count\
+FROM logs\
+GROUP BY country\
+ORDER BY log_count DESC;\
+\
+SELECT *\
+FROM logs\
+WHERE status = 'SUCCESS';\
+\
+SELECT *\
+FROM logs\
+WHERE log_date BETWEEN '2024-09-02T10:58:00' AND '2024-09-02T10:59:00';\
+\
+\
+
+\f1\fs40 SELECT SUBSTR(log_date, 1, 13) AS hour, COUNT(*) AS log_count\
+FROM logs\
+GROUP BY SUBSTR(log_date, 1, 13)\
+ORDER BY hour;\
+\
+\
+\
+\
+
+\f0\fs45\fsmilli22667 create table serverlogs (time STRING, ip STRING, country STRING, status STRING)
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' LOCATION '/user/ubuntu/\'92;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 select * from serverdata limit 10;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 select * from serverlogs limit 10;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 select * from serverdata limit 10;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 SELECT * FROM serverdata where country = "IN" LIMIT 5;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 select * from serverdata where country = "GB" ;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 select * from serverdata where country = "IN" AND status = "ERROR";
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 select * from serverdata where country = "FR" AND status = "SUCCESS";
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 SELECT ip, time FROM Serverdata;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 SELECT DISTINCT ip, time from serverdata;
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 SELECT DISTINCT ip from serverdata;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 SELECT DISTINCT * FROM serverlogs;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 create table doc(text string) row format delimited fields terminated by '\\n' stored as textfile;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 load data inpath '/user/ubuntu/*' overwrite into table doc;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 SELECT word, COUNT(*) FROM doc LATERAL VIEW explode(split(text, ' ')) lTable as
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 word GROUP BY word;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ctrl+C
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 -------------**Apache Pig Installation**------------------
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 wget {\field{\*\fldinst{HYPERLINK "https://archive.apache.org/dist/pig/pig-0.16.0/pig-0.16.0.tar.gz"}}{\fldrslt \cf3 \ul \ulc3 https://archive.apache.org/dist/pig/pig-0.16.0/pig-0.16.0.tar.gz\cf0 \ulnone \uc0\u8232 \u8232 }}wget {\field{\*\fldinst{HYPERLINK "https://dlcdn.apache.org/pig/pig-0.16.0/pig-0.16.0.tar.gz"}}{\fldrslt \cf3 \ul \ulc3 https://dlcdn.apache.org/pig/pig-0.16.0/pig-0.16.0.tar.gz\cf0 \ulnone \uc0\u8232 }}
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 tar -zxvf pig-0.16.0.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo mv pig-0.16.0 /usr/local/pig
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 export PIG_HOME=/usr/local/pig/
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export PATH=$PATH:$PIG_HOME/bin
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 pig
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 lines = LOAD '/user/hive/warehouse/server.db/doc/serverlog.log' AS (line:chararray);
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 / user/hive/warehouse/server.db/doc/serverlog.log
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 words = FOREACH lines GENERATE FLATTEN(TOKENIZE(line)) as word;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 grouped = GROUP words BY word;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 wordcount = FOREACH grouped GENERATE group, COUNT(words);
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 DUMP wordcount
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 .............Flume_log_data_ingestion :-
+\f1\fs40 \
+\
+\
+\
+\
+
+\f0\fs45\fsmilli22667 Step 1 . sudo apt-get update && sudo apt-get upgrade -y
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Step 2. wget http://archive.apache.org/dist/flume/1.4.0/apache-flume-1.4.0-bin.tar.gz
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( Download flume )
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Step 3. tar -zxvf apache-flume-1.4.0-bin.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 4. cd apache-flume-1.4.0-bin/conf/
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( Configuration file of flume )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 5. mv flume-env.sh.template flume-env.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( To make temple file to flume-env.sh )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 6. nano /home/ubuntu/apache-flume-1.4.0-bin/conf/flume-env.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( To configuration of flume environment )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 7. JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 FLUME_CLASSPATH="/home/ubuntu/apache-flume-1.4.0-bin/lib/*.jar"
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( To inform flume about java )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 8. nano flume.conf\'a0\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ( To configure flume configuration file )
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Step 9. Paste the below classes in conf file
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # Flume agent config
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sources = eventlog
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.channels = file_channel
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks = sink_to_hdfs
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # Define / Configure source
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sources.eventlog.type = exec
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sources.eventlog.command = tail -F /var/log/flume/event.log
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sources.eventlog.restart = true
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sources.eventlog.batchSize = 1000
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 #cloudage.sources.eventlog.type = seq
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # HDFS sinks	
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks.sink_to_hdfs.type = hdfs
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks.sink_to_hdfs.hdfs.fileType = DataStream
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks.sink_to_hdfs.hdfs.path = hdfs://localhost:9000/user/ubuntu/flume/events
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks.sink_to_hdfs.hdfs.filePrefix = event\uc0\u8232 eventlogcloudage.sinks.sink_to_hdfs.hdfs.fileSuffix = .log
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks.sink_to_hdfs.hdfs.batchSize = 1000
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # Use a channel which buffers events in memory
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.channels.file_channel.type = file
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.channels.file_channel.checkpointDir = /var/log/flume/checkpoint
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.channels.file_channel.dataDirs = /var/log/flume/data
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # Bind the source and sink to the channel
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sources.eventlog.channels = file_channel
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cloudage.sinks.sink_to_hdfs.channel = file_channel
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 10. sudo mkdir /var/log/flume/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 11. sudo mkdir /var/log/flume/checkpoint/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 12. sudo mkdir /var/log/flume/data/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 13. sudo chmod 777 -R /var/log/flume
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 14. hadoop fs -mkdir hdfs://localhost:9000/user/ubuntu/flume/events
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 15. Goto on Browser userubuntu/flume/events
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 16. wget https://sqldataset.s3.ap-south-1.amazonaws.com/ATM_API.py\
+
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ls
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 18. nano ATM_API.py
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 19. Open new terminal & connect it with machine. (This will be our 2 nd Terminal )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 20. tail -F /var/log/flume/eventlog.log ( 2 nd Terminal )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 21. sudo python generate_logs.py ( 1 st Terminal ) (and if error install python first )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ( We will get information on 2 nd Terminal )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 22. mv flume.conf apache-flume-1.4.0-bin/conf/
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( To move the flume file)
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 23. cd apache-flume-1.4.0-bin/bin
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( To go in bin folder)
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 24. ls <Enter>
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 25. ./flume-ng agent --conf /home/ubuntu/apache-flume-1.4.0-bin/conf/ --conf-file /home/ubuntu/apache-flume-1.4.0-bin/conf/flume.conf --name cloudage
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ( To start the agent after 1st line check for space )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 26. Go on 2 nd Terminal\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo python generate_logs.py <Enter>
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ( To run the python file. It is sink & put it on hdfs )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Step 27. Go on terminal & refresh the link ( / user/ubuntu/flume/events )
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( We will able to all transaction details on GUI )
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Now press CTRL + C on 1 st Terminal. We will get the message shutdown background worker
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 ( We can able to see the flume
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 ---Continue after Flume only--
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 Go to any terminal
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 cd\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 wget https://s3.amazonaws.com/cloud-age/flume-sources-1.0-SNAPSHOT.jar\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 (In lib folder only)
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano apache-flume-1.4.0-bin/conf/flume-env.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 (Add # before the last line)
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 FLUME_CLASSPATH="/home/ubuntu/apache-flume-1.4.0-bin/lib/flume-sources-1.0-SNAPSHOT.jar"\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 hadoop fs -mkdir hdfs://localhost:9000/user/ubuntu/twitter/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano twitter.conf\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 # Naming the components on the current agent
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources = Twitter\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.channels = MemChannel
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks = HDFS\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # Describing/Configuring the source
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.type = com.cloudera.flume.source.TwitterSource
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.channels = MemChannel\'a0\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.consumerKey = 
+\f2\fs46\fsmilli23333 \cf4 VqTWHIOzR29zSyanKm0kFgYib
+\f1\fs40 \cf0 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.consumerSecret = 
+\f2\fs46\fsmilli23333 \cf4 soQRPuZKZzswnJxepJPypoKSFsTjCytHNEfwKAJymC5G4RyCRJ
+\f0\fs45\fsmilli22667 \cf0 \'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.accessToken = 
+\f2\fs46\fsmilli23333 \cf4 923407581128810497-lYxTYXGfZUeOHcQw2RfTNe1SOlNW1kC
+\f0\fs45\fsmilli22667 \cf0 \'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.accessTokenSecret = 
+\f2\fs46\fsmilli23333 \cf4 KUao4IUCfftlvAYrCjb5OJCFXxvncHVLmqafaKdG2CO1M
+\f1\fs40 \cf0 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sources.Twitter.keywords = 
+\fs48 \cf5 \cb6 athletics paralympics, nasa astronaut sunita williams
+\fs45\fsmilli22667 \cf0 \cb1 , 
+\fs48 \cf5 \cb6 wheelchair basketball paralympics,
+\f1\fs40 \cf0 \cb1 \
+
+\f0\fs45\fsmilli22667 # Describing/Configuring the sink\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.channel = MemChannel\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.type = hdfs\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.path = hdfs://localhost:9000/user/ubuntu/twitter/
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.fileType = DataStream\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.writeFormat = Text\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.batchSize = 1000
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.rollSize = 0\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.rollCount = 1000
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.sinks.HDFS.hdfs.rollInterval = 900
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 # Describing/Configuring the channel\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.channels.MemChannel.type = memory\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.channels.MemChannel.capacity = 1000\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 TwitterAgent.channels.MemChannel.transactionCapacity = 1000
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ---We can add hot topic keyword in TwitterAgent.sources.Twitter.keywords ---
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mv twitter.conf apache-flume-1.4.0-bin/conf/\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cd /home/ubuntu/apache-flume-1.4.0-bin/bin
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 ./flume-ng agent --conf /home/ubuntu/apache-flume-1.4.0-bin/conf/ -f\'a0 /home/ubuntu/apache-flume-1.4.0-bin/conf/twitter.conf -Dflume.root.logger=DEBUG,console -n TwitterAgent\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 (This will take time, screen might look frozen but still it goes on check for space after fist line)
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 ctrl+c
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 (To end the logging)
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 ..........mysql installation_Sqoop.txt
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 sudo apt-get install mysql-server mysql-client -y \uc0\u8232 \u8232 sudo mysql_secure_installation
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Enter Password hadoop and Confirm Password hadoop
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 service mysql status
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mysqladmin -u root -p version
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mysqladmin -u root -p status
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mysql -u root -p
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mysql> show databases;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> CREATE DATABASE jinga_db;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> GRANT ALL PRIVILEGES ON jinga_db.* TO 'root'@'localhost';
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> show databases;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> USE jinga_db;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> show tables;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> CREATE TABLE user_data(first_name VARCHAR(50) NOT NULL,
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0\'a0company_name VARCHAR(100),
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0\'a0address VARCHAR(100),
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0country VARCHAR(50),
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0city VARCHAR(50),
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0state VARCHAR(50));
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mysql> desc user_data;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 \'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 exit;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 https://mycloudage.s3.ap-south-1.amazonaws.com/userdata.txt
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo cp userdata.txt /var/lib/mysql/jinga_db/
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 mysql -u root -p
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> USE jinga_db;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> LOAD DATA INFILE 'userdata.txt' INTO TABLE user_data FIELDS TERMINATED BY ',' ;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> SHOW VARIABLES LIKE 'secure_file_priv';\'a0\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 exit;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf \'a0 secure_file_priv = ""
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 sudo service mysql restart
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 sudo mysql -u root -p
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 USE jinga_db;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 set sql_mode='';
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> LOAD DATA INFILE 'userdata.txt' INTO TABLE user_data FIELDS TERMINATED BY ',';
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> SELECT COUNT(*) FROM user_data;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> select * from user_data limit 10;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> quit;
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 wget https://s3.amazonaws.com/cloud-age/Sample-SQL-File-10000-Rows.sql
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql -u root -p jinga_db < Sample-SQL-File-10000-Rows.sql
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql -u root -p
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> show databases;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> use jinga_db;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> show tables;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> desc user_details;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> select * from user_details limit 100;
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mysql> exit;
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 Back up mysql database:
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 mysqldump -u root -p --all-databases; > mysql_01-09-2024.sql
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 restore exising database
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 [root@CloudAge~]# mysql -u root -p < mysql_01-09-2024.sql\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 //for back up restore.
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 To uninstall mysql from ubuntu\uc0\u8232 \u8232 
+\f3\i \cf7 sudo systemctl stop mysql or 
+\fs48 \cf8 \cb9 sudo /etc/init.d/mysql stop
+\f1\i0\fs40 \cf0 \cb1 \
+
+\f0\fs45\fsmilli22667 \uc0\u8232 
+\f3\i \cf7 sudo apt-get purge mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-*
+\f1\i0\fs40 \cf0 \
+
+\f0\fs45\fsmilli22667 \uc0\u8232 
+\f3\i \cf7 sudo rm -rf /etc/mysql /var/lib/mysql
+\f1\i0\fs40 \cf0 \
+
+\f3\i\fs45\fsmilli22667 \cf7 sudo apt autoclean
+\f1\i0\fs40 \cf0 \
+
+\f3\i\fs45\fsmilli22667 \cf7 sudo apt autoremove
+\f1\i0\fs40 \cf0 \
+\
+\
+
+\f0\fs45\fsmilli22667 APACHE SQOOP
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 wget http://archive.apache.org/dist/sqoop/1.4.4/sqoop-1.4.4.bin__hadoop-1.0.0.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 tar -zxvf sqoop-1.4.4.bin__hadoop-1.0.0.tar.gz
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sudo mv sqoop-1.4.4.bin__hadoop-1.0.0 /usr/local/sqoop/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 nano ~/.bashrc
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 export SQOOP_PREFIX="/usr/local/sqoop/"
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export SQOOP_CONF_DIR="$SQOOP_PREFIX/conf"
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export SQOOP_CLASSPATH="$SQOOP_CONF_DIR"
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export PATH="$SQOOP_PREFIX/bin:$PATH"
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 exec bash
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cd $SQOOP_PREFIX/conf
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 mv sqoop-env-template.sh sqoop-env.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 nano sqoop-env.sh
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export HADOOP_COMMON_HOME=/usr/local/hadoop\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export HADOOP_MAPRED_HOME=/usr/local/hadoop
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export ZOOKEPER_HOME=$ZOOKEEPER_HOME
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export HBASE_HOME=$HBASE_HOME
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 export HIVE_HOME=$HIVE_HOME
+\f1\fs40 \
+\
+\
+
+\f0\fs45\fsmilli22667 wget {\field{\*\fldinst{HYPERLINK "https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-9.0.0.tar.gz"}}{\fldrslt \cf3 \ul \ulc3 https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-9.0.0.tar.gz}}\cf3 \ul \ulc3 \
+
+\f1\fs40 \cf0 \ulnone \
+
+\f0\fs45\fsmilli22667 tar -zxf mysql-connector{\field{\*\fldinst{HYPERLINK "https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-9.0.0.tar.gz"}}{\fldrslt \cf3 \ul -j-9.0.0.tar.gz}}\cf3 \ul \
+
+\f1\fs40 \cf0 \ulnone \
+
+\f0\fs45\fsmilli22667 cp mysql-connector-java-5.1.18/mysql-connector-java-5.1.18-bin.jar /usr/local/sqoop/lib/
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 cd $SQOOP_PREFIX/bin
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sqoop-version
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 sqoop import --connect jdbc:mysql://localhost/jinga_db --table user_details -m 1 --target-dir /tables/userdata/
+\f1\fs40 \
+\pard\pardeftab720\li960\fi-960\partightenfactor0
+
+\f0\fs45\fsmilli22667 \cf0 \'a0sqoop-import --connect jdbc:mysql://localhost/jinga_db --username root -P --table user_details -m 1 --target-dir /tables/userdetails
+\f1\fs40 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs45\fsmilli22667 \cf0 \'a0sqoop-import --connect jdbc:mysql://localhost/jinga_db --username root -P --table user_details -m 1 --target-dir /tables/userdetails\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0
+\f1\fs40 \
+
+\f0\fs45\fsmilli22667 	\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0
+\f1\fs40 \
+\
+
+\f0\fs45\fsmilli22667 \'a0\'a0\'a0\'a0\'a0\'a0\'a0
+\f1\fs40 \
+\
+}
